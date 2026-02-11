@@ -9,18 +9,16 @@ import { Hero } from "@/components/Hero";
 import { ImageGallery } from "@/components/ImageGallery";
 import { LeadForm } from "@/components/LeadForm";
 import { Pricing } from "@/components/Pricing";
-import { saleConfig } from "@/config/sale.config";
+import { TemplateSwitcher } from "@/components/TemplateSwitcher";
+import {
+  getTemplateBySlug,
+  normalizePath,
+  saleTemplates,
+} from "@/config/template.config";
 
 type Params = {
   slug: string;
 };
-
-const toSlug = (text: string) =>
-  text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\p{L}\p{N}-]+/gu, "");
 
 export async function generateMetadata({
   params,
@@ -28,19 +26,19 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const canonicalSlug = toSlug(saleConfig.productPath);
+  const template = getTemplateBySlug(slug);
 
-  if (slug !== canonicalSlug) {
+  if (!template) {
     return {
       title: "ไม่พบหน้าที่ต้องการ",
       description: "ไม่พบข้อมูลที่คุณกำลังค้นหา",
     };
   }
 
-  const title = `${saleConfig.headline} | ${saleConfig.productName}`;
-  const description = saleConfig.subHeadline;
+  const title = `${template.headline} | ${template.productName}`;
+  const description = template.subHeadline;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL as string;
-  const url = `${baseUrl}/sale/${encodeURIComponent(canonicalSlug)}`;
+  const url = `${baseUrl}/sale/${encodeURIComponent(slug)}`;
 
   return {
     title,
@@ -52,13 +50,13 @@ export async function generateMetadata({
       title,
       description,
       url,
-      siteName: saleConfig.productName,
+      siteName: template.productName,
       type: "website",
       locale: "th_TH",
       images: [
         {
-          url: saleConfig.images[0],
-          alt: saleConfig.productName,
+          url: template.images[0],
+          alt: template.productName,
         },
       ],
     },
@@ -66,13 +64,15 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [saleConfig.images[0]],
+      images: [template.images[0]],
     },
   };
 }
 
 export function generateStaticParams(): Params[] {
-  return [{ slug: toSlug(saleConfig.productPath) }];
+  return saleTemplates.map((template) => ({
+    slug: normalizePath(template.productPath),
+  }));
 }
 
 export default async function SalePage({
@@ -81,34 +81,32 @@ export default async function SalePage({
   params: Promise<Params>;
 }) {
   const { slug } = await params;
-  const canonicalSlug = toSlug(saleConfig.productPath);
+  const template = getTemplateBySlug(slug);
 
-  if (slug !== canonicalSlug) {
+  if (!template) {
     notFound();
   }
 
   return (
     <main>
       <Hero
-        productName={saleConfig.productName}
-        headline={saleConfig.headline}
-        subHeadline={saleConfig.subHeadline}
-        ctaText={saleConfig.ctaText}
+        productName={template.productName}
+        headline={template.headline}
+        subHeadline={template.subHeadline}
+        ctaText={template.ctaText}
       />
-      <Benefits benefits={[...saleConfig.benefits]} />
-      <Features features={[...saleConfig.features]} />
-      <ImageGallery
-        images={[...saleConfig.images]}
-        productName={saleConfig.productName}
-      />
-      <Pricing price={saleConfig.price} ctaText={saleConfig.ctaText} />
-      <FAQ faqs={[...saleConfig.faqs]} />
+      <TemplateSwitcher currentSlug={slug} />
+      <Benefits benefits={[...template.benefits]} />
+      <Features features={[...template.features]} />
+      <ImageGallery images={[...template.images]} productName={template.productName} />
+      <Pricing price={template.price} ctaText={template.ctaText} />
+      <FAQ faqs={[...template.faqs]} />
       <LeadForm
-        productName={saleConfig.productName}
-        ctaText={saleConfig.ctaText}
+        productName={template.productName}
+        ctaText={template.ctaText}
         slug={slug}
       />
-      <Footer productName={saleConfig.productName} />
+      <Footer productName={template.productName} />
     </main>
   );
 }

@@ -1,14 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { saleConfig } from "@/config/sale.config";
-
-const toSlug = (text: string) =>
-  text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\p{L}\p{N}-]+/gu, "");
+import { normalizePath, saleTemplates } from "@/config/template.config";
 
 export default function Home() {
-  redirect(`/sale/${toSlug(saleConfig.productPath)}`);
+  redirect(`/sale/${normalizePath(saleTemplates[0].productPath)}`);
 }

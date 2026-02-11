@@ -48,6 +48,8 @@ export const saleConfig = {
   ],
   price: "9,900 บาท",
   ctaText: "รับสิทธิ์ราคาโปรวันนี้",
+
+
 } as const;
 
 export type SaleConfig = typeof saleConfig;
